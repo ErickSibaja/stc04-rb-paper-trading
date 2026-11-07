@@ -32,3 +32,16 @@ the draft PR or move the workflow to main without a separate review.
 If candles are stale, incomplete, missing, or out of order; GitHub SHA changes;
 or API connectivity fails, the run must fail without persisting a new state.
 No automatic schedule has been enabled.
+
+## 5. Current readiness and next gate
+- The GitHub connector can publish source changes but cannot configure environment
+  protection or manually dispatch workflows.
+- The write workflow remains manual-only and is not present on the default branch.
+- The current write workflow references `paper-state-approval`; merely naming
+  an environment is NOT equivalent to requiring a reviewer.
+- Never enable a daily schedule before verifying first commit, a duplicate-day
+  no-op, and a missed-day failure with a real GitHub Actions run.
+- This simulator rejects gaps in persisted daily state rather than silently
+  skipping a day. Backfill/reconciliation must be designed before unattended use.
+- The quote endpoint is a live reference quote without an exchange timestamp;
+  execution is illustrative and should not be mistaken for a historical fill.
