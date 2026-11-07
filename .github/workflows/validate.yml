@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - development/stc04-rb-prototype
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 permissions:
   contents: read
