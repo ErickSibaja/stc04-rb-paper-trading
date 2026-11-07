@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "portfolio": {
+    "cash": "10000",
+    "qty": {
+      "BTCUSDT": "0",
+      "ETHUSDT": "0"
+    },
+    "last_candle_ms": null,
+    "trades": [],
+    "history": [],
+    "peak_equity": "10000"
+  }
+}
