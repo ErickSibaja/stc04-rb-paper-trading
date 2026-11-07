@@ -1,0 +1,26 @@
+name: STC-04_RB paper state commit (manual only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: stc04-rb-paper-state
+  cancel-in-progress: false
+jobs:
+  commit-paper-day:
+    if: github.ref == 'refs/heads/development/stc04-rb-prototype'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: paper-state-approval
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run unit tests before any state change
+        run: python -m unittest discover -s tests -v
+      - name: Commit exactly one completed UTC paper day
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python paper_run.py --commit
