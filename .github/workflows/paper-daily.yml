@@ -1,0 +1,57 @@
+name: STC-04_RB daily paper simulation (approval gated)
+
+on:
+  schedule:
+    # 00:25 UTC = 18:25 Costa Rica on the previous calendar day.
+    # GitHub-hosted cron is best-effort and may start late.
+    - cron: '25 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stc04-rb-paper-state
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify simulator safety tests
+        run: python -m unittest discover -s tests -v
+      - name: Verify Binance Spot data and read-only preview
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python connectivity_probe.py
+          python preview.py
+
+  persist:
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: paper-state-approval
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Persist one completed UTC paper session (no exchange orders)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python paper_run.py --commit
