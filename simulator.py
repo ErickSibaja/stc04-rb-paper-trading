@@ -22,6 +22,32 @@ def initial_state():
     return {"cash":str(START),"qty":{s:"0" for s in SYMBOLS},
             "last_candle_ms":None,"trades":[],"history":[],"peak_equity":str(START)}
 
+def process_closed_candle(state, candle_ms, closes_by_symbol, observed_prices, observed_at_ms):
+    """Process one fully closed UTC daily candle exactly once.
+
+    This is an offline function: prices and completed closes are supplied by caller.
+    The caller must verify source authenticity, daily UTC alignment and data freshness.
+    The observed execution reference must occur after the daily candle closes.
+    """
+    if not isinstance(candle_ms, int) or candle_ms < 0 or candle_ms % 86400000 != 0:
+        raise ValueError("candle_ms must be UTC midnight close timestamp in milliseconds")
+    if not isinstance(observed_at_ms, int) or observed_at_ms < candle_ms:
+        raise ValueError("Observation must be at or after candle close")
+    last=state.get("last_candle_ms")
+    if last is not None:
+        if candle_ms == last:
+            return copy.deepcopy(state), [], "duplicate_skipped"
+        if candle_ms < last:
+            raise ValueError("Out-of-order candle; state not changed")
+    if set(closes_by_symbol) != set(SYMBOLS) or set(observed_prices) != set(SYMBOLS):
+        raise ValueError("Both BTCUSDT and ETHUSDT required")
+    signals={s:signal(closes_by_symbol[s]) for s in SYMBOLS}
+    result,fills=rebalance(state,observed_prices,signals,str(observed_at_ms))
+    result["last_candle_ms"]=candle_ms
+    result["history"][-1]["candle_ms"]=candle_ms
+    result["history"][-1]["observed_at_ms"]=observed_at_ms
+    return result,fills,"processed"
+
 def equity(state,prices):
     return D(state["cash"])+sum(D(state["qty"][s])*D(str(prices[s])) for s in SYMBOLS)
 
