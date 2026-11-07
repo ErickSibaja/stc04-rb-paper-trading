@@ -17,6 +17,11 @@ def run(repository,token,commit=False,market_loader=fetch_market_snapshot,
     report=preview(state,market)
     if not commit:
         return {"mode":"preview","report":report,"committed":False}
+    # Commit only the latest completed UTC day. Never silently skip an
+    # unprocessed day: the strategy is daily and missing sessions require review.
+    last=state.get("last_candle_ms")
+    if last is not None and market["candle_ms"] != last and market["candle_ms"] != last + 86400000:
+        raise ValueError("Gap in daily portfolio state; manual reconciliation required")
     if report["status"]=="duplicate_skipped":
         return {"mode":"commit","report":report,"committed":False,"reason":"already_processed"}
     updated,_,status=process_closed_candle(
