@@ -11,7 +11,7 @@ START=D("10000")
 def signal(closes):
     """Input: chronologically ordered, completed UTC daily closing prices."""
     c=[D(str(x)) for x in closes]
-    if len(c)<200 or any(x<=0 for x in c):
+    if len(c)<200 or any(not x.is_finite() or x<=0 for x in c):
         raise ValueError("At least 200 valid completed daily closes required")
     sma=sum(c[-200:])/D(200)
     momentum=c[-1]/c[-61]-1
@@ -55,7 +55,7 @@ def rebalance(state,prices,signals,timestamp):
     """Illustrative fills at supplied observation prices, not actual exchange executions."""
     state=copy.deepcopy(state)
     px={s:D(str(prices[s])) for s in SYMBOLS}
-    if any(x<=0 for x in px.values()):
+    if any(not x.is_finite() or x<=0 for x in px.values()):
         raise ValueError("Invalid price")
     before=equity(state,px)
     targets={s:(TARGET if signals[s]["eligible"] else D("0"))*before for s in SYMBOLS}
