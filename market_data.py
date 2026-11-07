@@ -1,5 +1,6 @@
 """Read-only Binance Spot daily candle validation. No order endpoints."""
 import json
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -23,10 +24,13 @@ def validate_daily_klines(rows, now_ms, count=201):
         if previous is not None and opened!=previous+DAY_MS:
             raise ValueError("Missing, repeated, or out-of-order daily candle")
         previous=opened
-        price=float(row[4])
-        if not (0<price<float("inf")):
+        try:
+            price=Decimal(str(row[4]))
+        except (InvalidOperation, ValueError, TypeError) as exc:
+            raise ValueError("Invalid daily close") from exc
+        if not price.is_finite() or price<=0:
             raise ValueError("Invalid daily close")
-        closes.append(str(row[4]))
+        closes.append(str(price))
     # The final returned row must be fully closed, not today's developing candle.
     if int(rows[-1][6])>=now_ms:
         raise ValueError("Incomplete last daily candle")
