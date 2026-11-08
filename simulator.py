@@ -18,6 +18,27 @@ def signal(closes):
     return {"close":c[-1],"sma200":sma,"momentum60":momentum,
             "eligible":c[-1]>sma and momentum>0}
 
+def signal_audit(closes_by_symbol):
+    """Serializable decision evidence from completed daily closes only."""
+    if set(closes_by_symbol)!=set(SYMBOLS):
+        raise ValueError("Both symbols required for audit")
+    audit={}
+    for symbol in SYMBOLS:
+        item=signal(closes_by_symbol[symbol])
+        trend=item["close"]>item["sma200"]
+        momentum=item["momentum60"]>0
+        audit[symbol]={
+            "close":str(item["close"]),
+            "sma200":str(item["sma200"]),
+            "momentum60_pct":str(item["momentum60"]*D(100)),
+            "above_sma200":trend,
+            "positive_momentum60":momentum,
+            "eligible":item["eligible"],
+            "reason":"eligible" if item["eligible"] else (
+                "below_or_equal_sma200_and_nonpositive_momentum60" if not trend and not momentum else
+                "below_or_equal_sma200" if not trend else "nonpositive_momentum60")}
+    return audit
+
 def initial_state():
     return {"cash":str(START),"qty":{s:"0" for s in SYMBOLS},
             "last_candle_ms":None,"trades":[],"history":[],"peak_equity":str(START)}
@@ -41,11 +62,14 @@ def process_closed_candle(state, candle_ms, closes_by_symbol, observed_prices, o
             raise ValueError("Out-of-order candle; state not changed")
     if set(closes_by_symbol) != set(SYMBOLS) or set(observed_prices) != set(SYMBOLS):
         raise ValueError("Both BTCUSDT and ETHUSDT required")
-    signals={s:signal(closes_by_symbol[s]) for s in SYMBOLS}
+    audit=signal_audit(closes_by_symbol)
+    signals={s:{"eligible":audit[s]["eligible"]} for s in SYMBOLS}
     result,fills=rebalance(state,observed_prices,signals,str(observed_at_ms))
     result["last_candle_ms"]=candle_ms
     result["history"][-1]["candle_ms"]=candle_ms
     result["history"][-1]["observed_at_ms"]=observed_at_ms
+    result["history"][-1]["signals"]=audit
+    result["history"][-1]["reference_prices"]={s:str(D(str(observed_prices[s]))) for s in SYMBOLS}
     return result,fills,"processed"
 
 def equity(state,prices):
