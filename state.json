@@ -9,9 +9,17 @@
         "fills": 0,
         "observed_at_ms": 1794030064565,
         "timestamp": "1794030064565"
+      },
+      {
+        "candle_ms": 1794096000000,
+        "drawdown_pct": "0E-8",
+        "equity": "10000.00000000",
+        "fills": 0,
+        "observed_at_ms": 1794109174264,
+        "timestamp": "1794109174264"
       }
     ],
-    "last_candle_ms": 1794009600000,
+    "last_candle_ms": 1794096000000,
     "peak_equity": "10000",
     "qty": {
       "BTCUSDT": "0",
