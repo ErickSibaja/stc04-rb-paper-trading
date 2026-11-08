@@ -11,7 +11,7 @@ from urllib.request import Request,urlopen
 from decimal import Decimal
 from github_state import load_remote_state
 from market_data import validate_daily_klines
-from simulator import SYMBOLS,process_closed_candle,equity
+from simulator import SYMBOLS,process_closed_candle,equity,signal_audit
 
 HOSTS=("https://data-api.binance.vision","https://api.binance.com","https://api-gcp.binance.com")
 DAY_MS=86400000
@@ -64,7 +64,11 @@ def preview(state,snapshot):
         state,snapshot["candle_ms"],snapshot["closes"],snapshot["quotes"],
         snapshot["observed_at_ms"])
     after=equity(result,snapshot["quotes"])
-    return {"status":status,"candle_close_utc":datetime.fromtimestamp(
+    audit=(result["history"][-1].get("signals") if status=="processed" else None)
+    return {"status":status,"signals":audit,
+            "reference_prices":snapshot["quotes"],
+            "signal_note":"Previously processed: historical signals not recomputed as past evidence" if status=="duplicate_skipped" else "Signals computed from completed daily candles",
+            "candle_close_utc":datetime.fromtimestamp(
                 snapshot["candle_ms"]/1000,timezone.utc).isoformat(),
             "observed_at_utc":datetime.fromtimestamp(
                 snapshot["observed_at_ms"]/1000,timezone.utc).isoformat(),
