@@ -1,0 +1,32 @@
+name: STC-04 Forex historical research (manual)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  forex-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: forex-research
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download historical EURUSD BID and ASK
+        run: python forex_research/download.py
+      - name: Research STC-04 daily Forex strategy
+        run: python forex_research/study.py
+      - name: Upload research results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stc04-forex-study
+          path: forex-results/
+          if-no-files-found: warn
+          retention-days: 30
