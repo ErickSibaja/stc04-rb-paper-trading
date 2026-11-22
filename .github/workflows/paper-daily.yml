@@ -1,4 +1,4 @@
-name: STC-04_RB daily paper simulation (approval gated)
+name: STC-04_RB daily paper simulation
 
 on:
   schedule:
@@ -47,7 +47,6 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    environment: paper-state-approval
     permissions:
       contents: write
     steps:
@@ -63,6 +62,9 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           RESUME_GAP: ${{ inputs.resume_gap }}
         run: |
+          if [ "$GITHUB_EVENT_NAME" = schedule ]; then
+            RESUME_GAP=$(date -u -d yesterday +%F)
+          fi
           if [ -n "$RESUME_GAP" ]; then
             python paper_run.py --commit --resume-gap "$RESUME_GAP"
           else
