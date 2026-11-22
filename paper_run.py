@@ -6,12 +6,13 @@ contents:write. Do not schedule until workflow permissions and replay tests pass
 import argparse
 import json
 import os
+from datetime import datetime, timezone
 from preview import fetch_market_snapshot,preview
 from github_state import load_remote_state,save_remote_state
 from simulator import process_closed_candle
 
 def run(repository,token,commit=False,market_loader=fetch_market_snapshot,
-        state_loader=load_remote_state,state_writer=save_remote_state):
+        state_loader=load_remote_state,state_writer=save_remote_state,resume_gap=None):
     state,sha=state_loader(repository,token)
     market=market_loader()
     report=preview(state,market)
@@ -20,14 +21,27 @@ def run(repository,token,commit=False,market_loader=fetch_market_snapshot,
     # Commit only the latest completed UTC day. Never silently skip an
     # unprocessed day: the strategy is daily and missing sessions require review.
     last=state.get("last_candle_ms")
+    missing=[]
+    target_date=datetime.fromtimestamp(market["candle_ms"]/1000,timezone.utc).date().isoformat()
     if last is not None and market["candle_ms"] != last and market["candle_ms"] != last + 86400000:
-        raise ValueError("Gap in daily portfolio state; manual reconciliation required")
+        if market["candle_ms"] <= last or resume_gap != target_date:
+            raise ValueError("Gap in daily portfolio state; manual reconciliation required")
+        missing=[datetime.fromtimestamp(t/1000,timezone.utc).date().isoformat()
+                 for t in range(last+86400000,market["candle_ms"],86400000)]
     if report["status"]=="duplicate_skipped":
         return {"mode":"commit","report":report,"committed":False,"reason":"already_processed"}
     updated,_,status=process_closed_candle(
         state,market["candle_ms"],market["closes"],market["quotes"],market["observed_at_ms"])
     if status!="processed":
         raise RuntimeError("Unexpected candle status")
+    if missing:
+        updated.setdefault("reconciliations",[]).append({
+            "type":"EXPLICIT_RESUME_NO_BACKFILL", "missing_session_dates_utc":missing,
+            "resumed_session_date_utc":target_date,"previous_state_blob_sha":sha,
+            "observed_at_ms":market["observed_at_ms"],
+            "note":"No observations or trades reconstructed for omitted sessions; returns span an interruption."})
+        updated["history"][-1]["missing_session_dates_utc"]=missing
+        report["missing_session_dates_utc"]=missing
     # Optimistic locking: a concurrent update will be rejected by GitHub.
     state_writer(repository,token,updated,sha)
     return {"mode":"commit","report":report,"committed":True}
@@ -35,12 +49,13 @@ def run(repository,token,commit=False,market_loader=fetch_market_snapshot,
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--commit",action="store_true",help="Persist a single paper day")
+    parser.add_argument("--resume-gap",help="Explicit current UTC session date YYYY-MM-DD; preserve omitted days")
     args=parser.parse_args()
     token=os.environ.get("GITHUB_TOKEN")
     repo=os.environ.get("GITHUB_REPOSITORY")
     if not token or not repo:
         raise SystemExit("Missing GitHub credentials")
-    result=run(repo,token,commit=args.commit)
+    result=run(repo,token,commit=args.commit,resume_gap=args.resume_gap)
     print(json.dumps(result,indent=2))
 
 if __name__=="__main__":

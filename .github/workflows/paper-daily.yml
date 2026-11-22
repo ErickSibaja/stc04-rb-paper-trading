@@ -6,6 +6,13 @@ on:
     # GitHub-hosted cron is best-effort and may start late.
     - cron: '25 0 * * *'
   workflow_dispatch:
+    inputs:
+      resume_gap:
+        description: 'Recovery only: current UTC session date YYYY-MM-DD; no backfill'
+        type: string
+        default: ''
+  push:
+    paths: ['paper_run.py', 'tests/test_recovery.py']
 
 permissions:
   contents: read
@@ -37,7 +44,7 @@ jobs:
 
   persist:
     needs: validate
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     environment: paper-state-approval
@@ -54,4 +61,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: python paper_run.py --commit
+          RESUME_GAP: ${{ inputs.resume_gap }}
+        run: |
+          if [ -n "$RESUME_GAP" ]; then
+            python paper_run.py --commit --resume-gap "$RESUME_GAP"
+          else
+            python paper_run.py --commit
+          fi
