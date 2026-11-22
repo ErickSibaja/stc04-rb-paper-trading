@@ -63,7 +63,8 @@ jobs:
           RESUME_GAP: ${{ inputs.resume_gap }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = schedule ]; then
-            RESUME_GAP=$(date -u -d yesterday +%F)
+            # The daily session is keyed by its midnight UTC close.
+            RESUME_GAP=$(date -u +%F)
           fi
           if [ -n "$RESUME_GAP" ]; then
             python paper_run.py --commit --resume-gap "$RESUME_GAP"
