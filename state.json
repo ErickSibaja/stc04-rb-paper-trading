@@ -241,14 +241,73 @@
           }
         },
         "timestamp": "1794770535004"
+      },
+      {
+        "candle_ms": 1795392000000,
+        "drawdown_pct": "0E-8",
+        "equity": "10000.00000000",
+        "fills": 0,
+        "missing_session_dates_utc": [
+          "2026-11-16",
+          "2026-11-17",
+          "2026-11-18",
+          "2026-11-19",
+          "2026-11-20",
+          "2026-11-21",
+          "2026-11-22"
+        ],
+        "observed_at_ms": 1795398022625,
+        "reference_prices": {
+          "BTCUSDT": "61040.01000000",
+          "ETHUSDT": "1713.76000000"
+        },
+        "signals": {
+          "BTCUSDT": {
+            "above_sma200": false,
+            "close": "61271.08000000",
+            "eligible": false,
+            "momentum60_pct": "-27.40186924746675260907893115",
+            "positive_momentum60": false,
+            "reason": "below_or_equal_sma200_and_nonpositive_momentum60",
+            "sma200": "72384.85685000"
+          },
+          "ETHUSDT": {
+            "above_sma200": false,
+            "close": "1724.33000000",
+            "eligible": false,
+            "momentum60_pct": "-35.77220630906131388492611865",
+            "positive_momentum60": false,
+            "reason": "below_or_equal_sma200_and_nonpositive_momentum60",
+            "sma200": "2123.90490000"
+          }
+        },
+        "timestamp": "1795398022625"
       }
     ],
-    "last_candle_ms": 1794700800000,
+    "last_candle_ms": 1795392000000,
     "peak_equity": "10000",
     "qty": {
       "BTCUSDT": "0",
       "ETHUSDT": "0"
     },
+    "reconciliations": [
+      {
+        "missing_session_dates_utc": [
+          "2026-11-16",
+          "2026-11-17",
+          "2026-11-18",
+          "2026-11-19",
+          "2026-11-20",
+          "2026-11-21",
+          "2026-11-22"
+        ],
+        "note": "No observations or trades reconstructed for omitted sessions; returns span an interruption.",
+        "observed_at_ms": 1795398022625,
+        "previous_state_blob_sha": "b2c1694cae49ef29742a5fdd4765fc5cc3d00fe2",
+        "resumed_session_date_utc": "2026-11-23",
+        "type": "EXPLICIT_RESUME_NO_BACKFILL"
+      }
+    ],
     "trades": []
   },
   "schema_version": 1
