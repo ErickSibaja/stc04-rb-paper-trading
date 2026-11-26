@@ -346,9 +346,41 @@
           }
         },
         "timestamp": "1795571075182"
+      },
+      {
+        "candle_ms": 1795651200000,
+        "drawdown_pct": "0E-8",
+        "equity": "10000.00000000",
+        "fills": 0,
+        "observed_at_ms": 1795657407597,
+        "reference_prices": {
+          "BTCUSDT": "60769.04000000",
+          "ETHUSDT": "1702.06000000"
+        },
+        "signals": {
+          "BTCUSDT": {
+            "above_sma200": false,
+            "close": "60458.01000000",
+            "eligible": false,
+            "momentum60_pct": "-28.39536864097137260150343882",
+            "positive_momentum60": false,
+            "reason": "below_or_equal_sma200_and_nonpositive_momentum60",
+            "sma200": "72088.27370000"
+          },
+          "ETHUSDT": {
+            "above_sma200": false,
+            "close": "1692.65000000",
+            "eligible": false,
+            "momentum60_pct": "-37.22393030526678856074738626",
+            "positive_momentum60": false,
+            "reason": "below_or_equal_sma200_and_nonpositive_momentum60",
+            "sma200": "2114.69915000"
+          }
+        },
+        "timestamp": "1795657407597"
       }
     ],
-    "last_candle_ms": 1795564800000,
+    "last_candle_ms": 1795651200000,
     "peak_equity": "10000",
     "qty": {
       "BTCUSDT": "0",
